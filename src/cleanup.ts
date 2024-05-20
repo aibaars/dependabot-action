@@ -14,12 +14,29 @@ import {
 //
 // cutoff - a Go duration string to pass to the Docker API's 'until' argument, default '24h'
 export async function run(cutoff = '24h'): Promise<void> {
+  const docker = new Docker()
+  const proxy_id = core.getState('PROXY_CONTAINER_ID')
+  if (proxy_id) {
+    core.info('shutdown proxy')
+    const container = docker.getContainer(proxy_id)
+    try {
+      const inspectResult = await container.inspect()
+      const networks = inspectResult.NetworkSettings.Networks
+      for (const name in networks) {
+        const network = networks[name]
+        docker.getNetwork(network.NetworkID).remove()
+      }
+    } finally {
+      container.stop()
+      container.remove()
+    }
+  }
+
   if (process.env.DEPENDABOT_DISABLE_CLEANUP === '1') {
     return
   }
 
   try {
-    const docker = new Docker()
     const untilFilter = {until: [cutoff]}
     core.info(`Pruning networks older than ${cutoff}`)
     await docker.pruneNetworks({filters: untilFilter})

@@ -3,19 +3,21 @@
 import {Command} from 'commander'
 import {Context} from '@actions/github/lib/context'
 import {run} from './main'
+import * as cleanup from './cleanup'
 
 const cli = new Command()
 
 cli
   .version('0.0.1')
   .description('Run an update against the specified Dependabot API service')
-  .requiredOption('-j, --job-id <id>', 'Job ID is required.')
-  .requiredOption('-t, --job-token <token>', 'Job token required.')
-  .requiredOption(
+  .option('-j, --job-id <id>', 'Job ID is required.')
+  .option('-t, --job-token <token>', 'Job token required.')
+  .option('-w, --working-directory <path>', 'Working directory required.')
+  .option(
     '-c, --credentials-token <token>',
     'Job credentials token is required.'
   )
-  .requiredOption(
+  .option(
     '-d, --dependabot-api-url <url>',
     'A URL for Dependabot API is required.'
   )
@@ -32,5 +34,5 @@ ctx.actor = 'dependabot[bot]'
 ctx.payload = {
   inputs: options
 }
-
 run(ctx)
+cleanup.run()

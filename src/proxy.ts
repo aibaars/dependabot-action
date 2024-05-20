@@ -163,7 +163,6 @@ export class ProxyBuilder {
   private generateCertificateAuthority(): CertificateAuthority {
     const keys = pki.rsa.generateKeyPair(KEY_SIZE)
     const cert = pki.createCertificate()
-
     cert.publicKey = keys.publicKey
     cert.serialNumber = '01'
     cert.validity.notBefore = new Date()

@@ -63076,11 +63076,28 @@ const docker_tags_1 = __nccwpck_require__(4665);
 // cutoff - a Go duration string to pass to the Docker API's 'until' argument, default '24h'
 function run() {
     return __awaiter(this, arguments, void 0, function* (cutoff = '24h') {
+        const docker = new dockerode_1.default();
+        const proxy_id = core.getState('PROXY_CONTAINER_ID');
+        if (proxy_id) {
+            core.info('shutdown proxy');
+            const container = docker.getContainer(proxy_id);
+            try {
+                const inspectResult = yield container.inspect();
+                const networks = inspectResult.NetworkSettings.Networks;
+                for (const name in networks) {
+                    const network = networks[name];
+                    docker.getNetwork(network.NetworkID).remove();
+                }
+            }
+            finally {
+                container.stop();
+                container.remove();
+            }
+        }
         if (process.env.DEPENDABOT_DISABLE_CLEANUP === '1') {
             return;
         }
         try {
-            const docker = new dockerode_1.default();
             const untilFilter = { until: [cutoff] };
             core.info(`Pruning networks older than ${cutoff}`);
             yield docker.pruneNetworks({ filters: untilFilter });
