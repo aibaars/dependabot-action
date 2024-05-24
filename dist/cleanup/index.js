@@ -63081,17 +63081,18 @@ function run() {
         if (proxy_id) {
             core.info('shutdown proxy');
             const container = docker.getContainer(proxy_id);
+            yield container.stop();
+            let networks;
             try {
                 const inspectResult = yield container.inspect();
-                const networks = inspectResult.NetworkSettings.Networks;
-                for (const name in networks) {
-                    const network = networks[name];
-                    docker.getNetwork(network.NetworkID).remove();
-                }
+                networks = inspectResult.NetworkSettings.Networks;
             }
             finally {
-                container.stop();
-                container.remove();
+                yield container.remove();
+                for (const name in networks) {
+                    const network = networks[name];
+                    yield docker.getNetwork(network.NetworkID).remove();
+                }
             }
         }
         if (process.env.DEPENDABOT_DISABLE_CLEANUP === '1') {

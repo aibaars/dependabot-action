@@ -19,16 +19,18 @@ export async function run(cutoff = '24h'): Promise<void> {
   if (proxy_id) {
     core.info('shutdown proxy')
     const container = docker.getContainer(proxy_id)
+
+    await container.stop()
+    let networks
     try {
       const inspectResult = await container.inspect()
-      const networks = inspectResult.NetworkSettings.Networks
+      networks = inspectResult.NetworkSettings.Networks
+    } finally {
+      await container.remove()
       for (const name in networks) {
         const network = networks[name]
-        docker.getNetwork(network.NetworkID).remove()
+        await docker.getNetwork(network.NetworkID).remove()
       }
-    } finally {
-      container.stop()
-      container.remove()
     }
   }
 
