@@ -101202,6 +101202,7 @@ const proxy_1 = __nccwpck_require__(7364);
 const dockerode_1 = __importDefault(__nccwpck_require__(4571));
 const node_forge_1 = __nccwpck_require__(7655);
 const fs_1 = __nccwpck_require__(7147);
+const path_1 = __nccwpck_require__(1017);
 var DependabotErrorType;
 (function (DependabotErrorType) {
     DependabotErrorType["Unknown"] = "actions_workflow_unknown";
@@ -101300,10 +101301,21 @@ function run(context) {
         yield proxy.container.start();
         core.saveState('PROXY_CONTAINER_ID', proxy.container.id);
         const proxyUrl = new URL(yield proxy.url());
-        const p12 = node_forge_1.pkcs12.toPkcs12Asn1(null, node_forge_1.pki.certificateFromPem(proxy.cert), null);
+        const password = 'changeit';
+        const p12 = node_forge_1.pkcs12.toPkcs12Asn1(
+        // generate dummy key
+        node_forge_1.pki.rsa.generateKeyPair(2048).privateKey, node_forge_1.pki.certificateFromPem(proxy.cert), password, {
+            algorithm: '3des',
+            friendlyName: 'mykey',
+            generateLocalKeyId: false,
+            useMac: true,
+            count: 10000,
+            saltSize: 20
+        });
         const trustStore = 'keystore.p12';
-        (0, fs_1.writeFileSync)(trustStore, node_forge_1.asn1.toDer(p12).bytes());
-        const JAVA_SSL_OPTS = `-Djavax.net.ssl.trustStore=${trustStore} -Djavax.net.ssl.trustStoreType=PKCS12`;
+        (0, fs_1.writeFileSync)(trustStore, node_forge_1.asn1.toDer(p12).getBytes(), { encoding: 'binary' });
+        (0, fs_1.writeFileSync)('cert.pem', proxy.cert);
+        const JAVA_SSL_OPTS = `-Djavax.net.ssl.trustStore=${(0, path_1.resolve)(trustStore)} -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=${password}`;
         const JAVA_PROXY_OPTS = `-Dhttp.proxyHost=${proxyUrl.hostname} -Dhttp.proxyPort=${proxyUrl.port} -Dhttps.proxyHost=${proxyUrl.hostname} -Dhttps.proxyPort=${proxyUrl.port}`;
         core.exportVariable('MAVEN_OPTS', `${JAVA_SSL_OPTS} -DproxySet=true ${JAVA_PROXY_OPTS} ${process.env.MAVEN_OPTS || ''}`);
         core.exportVariable('GRADLE_OPTS', `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.GRADLE_OPTS || ''}`);
@@ -101415,7 +101427,6 @@ const fs_1 = __importDefault(__nccwpck_require__(7147));
 const core = __importStar(__nccwpck_require__(2186));
 const container_service_1 = __nccwpck_require__(2429);
 const node_forge_1 = __nccwpck_require__(7655);
-const utils_1 = __nccwpck_require__(1314);
 const KEY_SIZE = 2048;
 const KEY_EXPIRY_YEARS = 2;
 const CONFIG_FILE_PATH = '/';
@@ -101471,12 +101482,16 @@ class ProxyBuilder {
                 const customCert = fs_1.default.readFileSync(customCAPath, 'utf8').toString();
                 yield container_service_1.ContainerService.storeCert(CUSTOM_CA_CERT_NAME, CA_CERT_INPUT_PATH, container, customCert);
             }
-            const stream = yield container.attach({
-                stream: true,
-                stdout: true,
-                stderr: true
-            });
-            container.modem.demuxStream(stream, (0, utils_1.outStream)('  proxy'), (0, utils_1.errStream)('  proxy'));
+            // const stream = await container.attach({
+            //   stream: true,
+            //   stdout: true,
+            //   stderr: true
+            // })
+            // container.modem.demuxStream(
+            //   stream,
+            //   outStream('  proxy'),
+            //   errStream('  proxy')
+            // )
             const url = () => __awaiter(this, void 0, void 0, function* () {
                 const containerInfo = yield container.inspect();
                 if (containerInfo.State.Running === true) {

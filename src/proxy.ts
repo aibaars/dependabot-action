@@ -5,7 +5,6 @@ import {CertificateAuthority, ProxyConfig} from './config-types'
 import {ContainerService} from './container-service'
 import {Credential} from './api-client'
 import {pki} from 'node-forge'
-import {outStream, errStream} from './utils'
 
 const KEY_SIZE = 2048
 const KEY_EXPIRY_YEARS = 2
@@ -102,16 +101,16 @@ export class ProxyBuilder {
       )
     }
 
-    const stream = await container.attach({
-      stream: true,
-      stdout: true,
-      stderr: true
-    })
-    container.modem.demuxStream(
-      stream,
-      outStream('  proxy'),
-      errStream('  proxy')
-    )
+    // const stream = await container.attach({
+    //   stream: true,
+    //   stdout: true,
+    //   stderr: true
+    // })
+    // container.modem.demuxStream(
+    //   stream,
+    //   outStream('  proxy'),
+    //   errStream('  proxy')
+    // )
 
     const url = async (): Promise<string> => {
       const containerInfo = await container.inspect()

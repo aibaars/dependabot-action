@@ -10,6 +10,7 @@ import {ProxyBuilder} from './proxy'
 import Docker from 'dockerode'
 import {pki, pkcs12, asn1} from 'node-forge'
 import {writeFileSync} from 'fs'
+import {resolve} from 'path'
 
 export enum DependabotErrorType {
   Unknown = 'actions_workflow_unknown',
@@ -135,17 +136,28 @@ export async function run(context: Context): Promise<void> {
   )
   botSay('start proxy')
   await proxy.container.start()
-
   core.saveState('PROXY_CONTAINER_ID', proxy.container.id)
   const proxyUrl = new URL(await proxy.url())
+  const password = 'changeit'
   const p12 = pkcs12.toPkcs12Asn1(
-    null,
+    // generate dummy key
+    pki.rsa.generateKeyPair(2048).privateKey,
     pki.certificateFromPem(proxy.cert),
-    null
+    password,
+    {
+      algorithm: '3des',
+      friendlyName: 'mykey',
+      generateLocalKeyId: false,
+      useMac: true,
+      count: 10000,
+      saltSize: 20
+    }
   )
+
   const trustStore = 'keystore.p12'
-  writeFileSync(trustStore, asn1.toDer(p12).bytes())
-  const JAVA_SSL_OPTS = `-Djavax.net.ssl.trustStore=${trustStore} -Djavax.net.ssl.trustStoreType=PKCS12`
+  writeFileSync(trustStore, asn1.toDer(p12).getBytes(), {encoding: 'binary'})
+  writeFileSync('cert.pem', proxy.cert)
+  const JAVA_SSL_OPTS = `-Djavax.net.ssl.trustStore=${resolve(trustStore)} -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=${password}`
   const JAVA_PROXY_OPTS = `-Dhttp.proxyHost=${proxyUrl.hostname} -Dhttp.proxyPort=${proxyUrl.port} -Dhttps.proxyHost=${proxyUrl.hostname} -Dhttps.proxyPort=${proxyUrl.port}`
 
   core.exportVariable(
