@@ -72,7 +72,7 @@ jobs:
                       <mirrorOf>*</mirrorOf>
                     </mirror>
                   </mirrors>
-                </settings>' > ~/m2/settings.xml  
+                </settings>' > ~/.m2/settings.xml  
 
     # Setup dependabot proxy.
     - name: Setup dependabot proxy
