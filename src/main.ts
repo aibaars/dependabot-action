@@ -172,6 +172,10 @@ export async function run(context: Context): Promise<void> {
     'SEMMLE_JAVA_EXTRACTOR_JVM_ARGS',
     `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.SEMMLE_JAVA_EXTRACTOR_JVM_ARGS || ''}`
   )
+  core.exportVariable(
+    'CODEQL_JAVA_EXTRACTOR_TRUST_STORE_PATH',
+    `${resolve(trustStore)}`
+  )
 }
 
 async function failJob(

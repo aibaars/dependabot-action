@@ -101320,6 +101320,7 @@ function run(context) {
         core.exportVariable('MAVEN_OPTS', `${JAVA_SSL_OPTS} -DproxySet=true ${JAVA_PROXY_OPTS} ${process.env.MAVEN_OPTS || ''}`);
         core.exportVariable('GRADLE_OPTS', `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.GRADLE_OPTS || ''}`);
         core.exportVariable('SEMMLE_JAVA_EXTRACTOR_JVM_ARGS', `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.SEMMLE_JAVA_EXTRACTOR_JVM_ARGS || ''}`);
+        core.exportVariable('CODEQL_JAVA_EXTRACTOR_TRUST_STORE_PATH', `${(0, path_1.resolve)(trustStore)}`);
     });
 }
 exports.run = run;
