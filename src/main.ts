@@ -168,6 +168,10 @@ export async function run(context: Context): Promise<void> {
     'GRADLE_OPTS',
     `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.GRADLE_OPTS || ''}`
   )
+  core.exportVariable(
+    'SEMMLE_JAVA_EXTRACTOR_JVM_ARGS',
+    `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.SEMMLE_JAVA_EXTRACTOR_JVM_ARGS || ''}`
+  )
 }
 
 async function failJob(

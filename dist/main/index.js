@@ -101319,6 +101319,7 @@ function run(context) {
         const JAVA_PROXY_OPTS = `-Dhttp.proxyHost=${proxyUrl.hostname} -Dhttp.proxyPort=${proxyUrl.port} -Dhttps.proxyHost=${proxyUrl.hostname} -Dhttps.proxyPort=${proxyUrl.port}`;
         core.exportVariable('MAVEN_OPTS', `${JAVA_SSL_OPTS} -DproxySet=true ${JAVA_PROXY_OPTS} ${process.env.MAVEN_OPTS || ''}`);
         core.exportVariable('GRADLE_OPTS', `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.GRADLE_OPTS || ''}`);
+        core.exportVariable('SEMMLE_JAVA_EXTRACTOR_JVM_ARGS', `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.SEMMLE_JAVA_EXTRACTOR_JVM_ARGS || ''}`);
     });
 }
 exports.run = run;
