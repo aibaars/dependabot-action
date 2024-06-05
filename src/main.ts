@@ -9,8 +9,9 @@ import {PROXY_IMAGE_NAME} from './docker-tags'
 import {ProxyBuilder} from './proxy'
 import Docker from 'dockerode'
 import {pki, pkcs12, asn1} from 'node-forge'
-import {writeFileSync} from 'fs'
-import {resolve} from 'path'
+import {writeFileSync, mkdirSync} from 'fs'
+import {resolve, join} from 'path'
+import {homedir} from 'os'
 
 export enum DependabotErrorType {
   Unknown = 'actions_workflow_unknown',
@@ -159,6 +160,17 @@ export async function run(context: Context): Promise<void> {
   writeFileSync('cert.pem', proxy.cert)
   const JAVA_SSL_OPTS = `-Djavax.net.ssl.trustStore=${resolve(trustStore)} -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=${password}`
   const JAVA_PROXY_OPTS = `-Dhttp.proxyHost=${proxyUrl.hostname} -Dhttp.proxyPort=${proxyUrl.port} -Dhttps.proxyHost=${proxyUrl.hostname} -Dhttps.proxyPort=${proxyUrl.port}`
+
+  const settings = `<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
+    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.2.0.xsd">\
+    <proxies>\
+      <proxy><protocol>http</protocol><host>${proxyUrl.hostname}</host><port>${proxyUrl.port}</port></proxy>\
+      <proxy><protocol>https</protocol><host>${proxyUrl.hostname}</host><port>${proxyUrl.port}</port></proxy>\
+    </proxies>\
+  </settings>`
+  const m2_dir = join(homedir(), '.m2')
+  mkdirSync(m2_dir, {recursive: true})
+  writeFileSync(join(m2_dir, 'settings.xml'), settings)
 
   core.exportVariable(
     'MAVEN_OPTS',

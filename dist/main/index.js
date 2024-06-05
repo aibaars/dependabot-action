@@ -101203,6 +101203,7 @@ const dockerode_1 = __importDefault(__nccwpck_require__(4571));
 const node_forge_1 = __nccwpck_require__(7655);
 const fs_1 = __nccwpck_require__(7147);
 const path_1 = __nccwpck_require__(1017);
+const os_1 = __nccwpck_require__(2037);
 var DependabotErrorType;
 (function (DependabotErrorType) {
     DependabotErrorType["Unknown"] = "actions_workflow_unknown";
@@ -101317,6 +101318,16 @@ function run(context) {
         (0, fs_1.writeFileSync)('cert.pem', proxy.cert);
         const JAVA_SSL_OPTS = `-Djavax.net.ssl.trustStore=${(0, path_1.resolve)(trustStore)} -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=${password}`;
         const JAVA_PROXY_OPTS = `-Dhttp.proxyHost=${proxyUrl.hostname} -Dhttp.proxyPort=${proxyUrl.port} -Dhttps.proxyHost=${proxyUrl.hostname} -Dhttps.proxyPort=${proxyUrl.port}`;
+        const settings = `<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
+    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.2.0.xsd">\
+    <proxies>\
+      <proxy><protocol>http</protocol><host>${proxyUrl.hostname}</host><port>${proxyUrl.port}</port></proxy>\
+      <proxy><protocol>https</protocol><host>${proxyUrl.hostname}</host><port>${proxyUrl.port}</port></proxy>\
+    </proxies>\
+  </settings>`;
+        const m2_dir = (0, path_1.join)((0, os_1.homedir)(), '.m2');
+        (0, fs_1.mkdirSync)(m2_dir, { recursive: true });
+        (0, fs_1.writeFileSync)((0, path_1.join)(m2_dir, 'settings.xml'), settings);
         core.exportVariable('MAVEN_OPTS', `${JAVA_SSL_OPTS} -DproxySet=true ${JAVA_PROXY_OPTS} ${process.env.MAVEN_OPTS || ''}`);
         core.exportVariable('GRADLE_OPTS', `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.GRADLE_OPTS || ''}`);
         core.exportVariable('SEMMLE_JAVA_EXTRACTOR_JVM_ARGS', `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.SEMMLE_JAVA_EXTRACTOR_JVM_ARGS || ''}`);
