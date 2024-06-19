@@ -155,10 +155,11 @@ export async function run(context: Context): Promise<void> {
     }
   )
 
-  const trustStore = 'keystore.p12'
+  const trustStore = resolve('keystore.p12')
+  const pemFile = resolve('cert.pem')
   writeFileSync(trustStore, asn1.toDer(p12).getBytes(), {encoding: 'binary'})
-  writeFileSync('cert.pem', proxy.cert)
-  const JAVA_SSL_OPTS = `-Djavax.net.ssl.trustStore=${resolve(trustStore)} -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=${password}`
+  writeFileSync(pemFile, proxy.cert)
+  const JAVA_SSL_OPTS = `-Djavax.net.ssl.trustStore=${trustStore} -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=${password}`
   const JAVA_PROXY_OPTS = `-Dhttp.proxyHost=${proxyUrl.hostname} -Dhttp.proxyPort=${proxyUrl.port} -Dhttps.proxyHost=${proxyUrl.hostname} -Dhttps.proxyPort=${proxyUrl.port}`
 
   const settings = `<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
@@ -184,10 +185,11 @@ export async function run(context: Context): Promise<void> {
     'SEMMLE_JAVA_EXTRACTOR_JVM_ARGS',
     `${JAVA_SSL_OPTS} ${JAVA_PROXY_OPTS} ${process.env.SEMMLE_JAVA_EXTRACTOR_JVM_ARGS || ''}`
   )
-  core.exportVariable(
-    'CODEQL_JAVA_EXTRACTOR_TRUST_STORE_PATH',
-    `${resolve(trustStore)}`
-  )
+  core.exportVariable('CODEQL_JAVA_EXTRACTOR_TRUST_STORE_PATH', `${trustStore}`)
+  core.exportVariable('PROXY_NETWORK_NAME', `${proxy.networkName}`)
+  core.exportVariable('PROXY_HOST', `${proxyUrl.hostname}`)
+  core.exportVariable('PROXY_PORT', `${proxyUrl.port}`)
+  core.exportVariable('PROXY_CA_CERT', `${pemFile}`)
 }
 
 async function failJob(
